@@ -3,7 +3,7 @@
     <div class="card">
       <div class="toolbar">
         <h2>Todos los medicamentos</h2>
-        <button class="btn btn-accent">+ Agregar medicamento</button>
+        <button class="btn btn-accent" @click="abrirCrear">+ Agregar medicamento</button>
       </div>
 
       <table>
@@ -33,9 +33,8 @@
             </td>
             <td>
               <div class="acciones">
-                <button class="icon-btn">👁</button>
-                <button class="icon-btn accent">✎</button>
-                <button class="icon-btn danger">🗑</button>
+                <button class="icon-btn accent" @click="abrirEditar(med)">✎</button>
+                <button class="icon-btn danger" @click="eliminar(med)">🗑</button>
               </div>
             </td>
           </tr>
@@ -45,27 +44,56 @@
         </tbody>
       </table>
     </div>
+
+    <MedicamentoFormModal
+      :visible="mostrarModal"
+      :medicamento="medicamentoEditar"
+      @cerrar="mostrarModal = false"
+      @guardado="onGuardado"
+    />
   </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
-import api from '../services/api';
+import MedicamentoFormModal from '../components/MedicamentoFormModal.vue';
+import { listarMedicamentos, eliminarMedicamento } from '../services/medicamentoService';
 
 const medicamentos = ref([]);
 const cargando = ref(true);
+const mostrarModal = ref(false);
+const medicamentoEditar = ref(null);
 
-onMounted(async () => {
+async function cargarMedicamentos() {
+  cargando.value = true;
   try {
-    const { data } = await api.get('/medicamentos');
+    const { data } = await listarMedicamentos();
     medicamentos.value = data;
-  } catch (error) {
-    console.error('Error al cargar medicamentos', error);
   } finally {
     cargando.value = false;
   }
-});
+}
+
+function abrirCrear() {
+  medicamentoEditar.value = null;
+  mostrarModal.value = true;
+}
+function abrirEditar(med) {
+  medicamentoEditar.value = med;
+  mostrarModal.value = true;
+}
+async function onGuardado() {
+  mostrarModal.value = false;
+  await cargarMedicamentos();
+}
+async function eliminar(med) {
+  if (!window.confirm(`¿Eliminar ${med.nombre_medicamento}?`)) return;
+  await eliminarMedicamento(med.id_medicamento);
+  await cargarMedicamentos();
+}
+
+onMounted(cargarMedicamentos);
 </script>
 
 <style scoped>
@@ -75,29 +103,24 @@ onMounted(async () => {
   justify-content: space-between;
   padding: 20px 22px;
 }
-
 .toolbar h2 {
   font-size: 15px;
   margin: 0;
   color: var(--text-muted);
   font-weight: 600;
 }
-
 .nombre {
   font-weight: 600;
 }
-
 .subtexto {
   color: var(--text-muted);
   font-size: 12.5px;
   margin-top: 2px;
 }
-
 .acciones {
   display: flex;
   gap: 8px;
 }
-
 .vacio {
   text-align: center;
   color: var(--text-muted);

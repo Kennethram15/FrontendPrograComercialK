@@ -3,7 +3,7 @@
     <div class="card">
       <div class="toolbar">
         <h2>Todas las compras</h2>
-        <button class="btn btn-accent">+ Nueva compra</button>
+        <button class="btn btn-accent" @click="$router.push('/nueva-compra')">+ Nueva compra</button>
       </div>
 
       <table>

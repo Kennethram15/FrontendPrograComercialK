@@ -3,7 +3,7 @@
     <div class="card">
       <div class="toolbar">
         <h2>Todos los clientes</h2>
-        <button class="btn btn-accent">+ Agregar cliente</button>
+        <button class="btn btn-accent" @click="abrirCrear">+ Agregar cliente</button>
       </div>
 
       <table>
@@ -26,9 +26,8 @@
             </td>
             <td>
               <div class="acciones">
-                <button class="icon-btn">👁</button>
-                <button class="icon-btn accent">✎</button>
-                <button class="icon-btn danger">🗑</button>
+                <button class="icon-btn accent" @click="abrirEditar(cli)">✎</button>
+                <button class="icon-btn danger" @click="eliminar(cli)">🗑</button>
               </div>
             </td>
           </tr>
@@ -38,27 +37,66 @@
         </tbody>
       </table>
     </div>
+
+    <ClienteFormModal
+      :visible="mostrarModal"
+      :cliente="clienteEditar"
+      @cerrar="cerrarModal"
+      @guardado="onGuardado"
+    />
   </AppLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
-import api from '../services/api';
+import ClienteFormModal from '../components/ClienteFormModal.vue';
+import { listarClientes, eliminarCliente } from '../services/clienteService';
 
 const clientes = ref([]);
 const cargando = ref(true);
+const mostrarModal = ref(false);
+const clienteEditar = ref(null);
 
-onMounted(async () => {
+async function cargarClientes() {
+  cargando.value = true;
   try {
-    const { data } = await api.get('/clientes');
+    const { data } = await listarClientes();
     clientes.value = data;
   } catch (error) {
     console.error('Error al cargar clientes', error);
   } finally {
     cargando.value = false;
   }
-});
+}
+
+function abrirCrear() {
+  clienteEditar.value = null;
+  mostrarModal.value = true;
+}
+
+function abrirEditar(cliente) {
+  clienteEditar.value = cliente;
+  mostrarModal.value = true;
+}
+
+function cerrarModal() {
+  mostrarModal.value = false;
+}
+
+async function onGuardado() {
+  mostrarModal.value = false;
+  await cargarClientes();
+}
+
+async function eliminar(cliente) {
+  const confirmar = window.confirm(`¿Eliminar a ${cliente.nombre_cliente}?`);
+  if (!confirmar) return;
+  await eliminarCliente(cliente.id_cliente);
+  await cargarClientes();
+}
+
+onMounted(cargarClientes);
 </script>
 
 <style scoped>
@@ -68,23 +106,19 @@ onMounted(async () => {
   justify-content: space-between;
   padding: 20px 22px;
 }
-
 .toolbar h2 {
   font-size: 15px;
   margin: 0;
   color: var(--text-muted);
   font-weight: 600;
 }
-
 .nombre {
   font-weight: 600;
 }
-
 .acciones {
   display: flex;
   gap: 8px;
 }
-
 .vacio {
   text-align: center;
   color: var(--text-muted);

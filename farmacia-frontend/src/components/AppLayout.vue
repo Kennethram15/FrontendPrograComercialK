@@ -63,6 +63,10 @@ const navItems = [
   { path: '/compras', label: 'Compras' },
   { path: '/proveedores', label: 'Proveedores' },
   { path: '/clientes', label: 'Clientes' },
+  { path: '/roles', label: 'Roles' },
+  { path: '/metodos-pago', label: 'Métodos de pago' },
+  { path: '/presentaciones', label: 'Presentaciones' },
+  { path: '/lotes', label: 'Lotes' },
 ];
 </script>
 

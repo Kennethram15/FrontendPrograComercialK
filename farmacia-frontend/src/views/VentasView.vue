@@ -26,7 +26,7 @@
     <div class="card">
       <div class="toolbar">
         <h2>Todas las ventas</h2>
-        <button class="btn btn-accent">+ Nueva venta</button>
+        <button class="btn btn-accent" @click="$router.push('/nueva-venta')">+ Nueva venta</button>
       </div>
 
       <table>
