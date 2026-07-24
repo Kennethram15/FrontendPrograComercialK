@@ -52,11 +52,11 @@
               </span>
             </td>
             <td>
-              <div class="acciones">
-                <button class="icon-btn">👁</button>
-                <button class="icon-btn accent">✎</button>
-                <button class="icon-btn danger">🗑</button>
-              </div>
+                <div class="acciones">
+                  <button class="icon-btn" title="Descargar comprobante" @click="descargar(venta.id_venta)">🧾</button>
+                  <button class="icon-btn accent">✎</button>
+                  <button class="icon-btn danger">🗑</button>
+                </div>
             </td>
           </tr>
           <tr v-if="!cargando && ventas.length === 0">
@@ -73,11 +73,17 @@ import { ref, reactive, onMounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import StatCard from '../components/StatCard.vue';
 import api from '../services/api';
-
+import { descargarComprobante } from '../services/ventaService';
 const ventas = ref([]);
 const cargando = ref(true);
 const stats = reactive({ total: 0, completadas: 0, pendientes: 0, canceladas: 0 });
-
+async function descargar(idVenta) {
+  try {
+    await descargarComprobante(idVenta);
+  } catch (e) {
+    alert('No se pudo descargar el comprobante');
+  }
+}
 function claseEstado(estado) {
   if (estado === 'completada') return 'badge-success';
   if (estado === 'cancelada') return 'badge-danger';

@@ -31,8 +31,8 @@
             <span class="notif-dot">3</span>
           </button>
           <button class="icon-btn" title="Configuración">⚙️</button>
-          <button class="icon-btn" title="Historial">🕘</button>
-          <div class="avatar">K</div>
+          <button class="icon-btn" title="Cerrar sesión" @click="cerrarSesion">🚪</button>
+          <div class="avatar" :title="usuario?.nombre_usuario">{{ inicial }}</div>
           <input class="search" type="text" placeholder="Buscar..." />
         </div>
       </header>
@@ -45,7 +45,9 @@
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { obtenerUsuario, logout } from '../services/authService';
 
 defineProps({
   title: {
@@ -55,19 +57,32 @@ defineProps({
 });
 
 const route = useRoute();
+const router = useRouter();
+const usuario = obtenerUsuario();
 
-const navItems = [
+const inicial = computed(() => usuario?.nombre_usuario?.charAt(0)?.toUpperCase() || '?');
+
+const todosLosItems = [
   { path: '/', label: 'Panel' },
   { path: '/medicamentos', label: 'Medicamentos' },
   { path: '/ventas', label: 'Ventas' },
   { path: '/compras', label: 'Compras' },
   { path: '/proveedores', label: 'Proveedores' },
   { path: '/clientes', label: 'Clientes' },
-  { path: '/roles', label: 'Roles' },
+  { path: '/roles', label: 'Roles', soloAdmin: true },
   { path: '/metodos-pago', label: 'Métodos de pago' },
   { path: '/presentaciones', label: 'Presentaciones' },
   { path: '/lotes', label: 'Lotes' },
 ];
+
+const navItems = computed(() =>
+  todosLosItems.filter((item) => !item.soloAdmin || usuario?.nombre_rol === 'Administrador')
+);
+
+function cerrarSesion() {
+  logout();
+  router.push('/login');
+}
 </script>
 
 <style scoped>
