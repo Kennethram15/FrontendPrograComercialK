@@ -11,7 +11,7 @@
           <tr><th>Nombre</th><th>Cuenta</th><th>Estado</th><th>Acciones</th></tr>
         </thead>
         <tbody>
-          <tr v-for="m in metodos" :key="m.id_metodo_pago">
+          <tr v-for="m in itemsPaginados" :key="m.id_metodo_pago">
             <td class="nombre">{{ m.nombre_metodo_pago }}</td>
             <td>{{ m.cuenta_metodo_pago || '—' }}</td>
             <td>
@@ -26,11 +26,15 @@
               </div>
             </td>
           </tr>
-          <tr v-if="!cargando && metodos.length === 0">
-            <td colspan="4" class="vacio">No hay métodos de pago registrados todavía.</td>
+          <tr v-if="!cargando && metodosFiltrados.length === 0">
+            <td colspan="4" class="vacio">
+              {{ busqueda.texto ? 'No hay métodos de pago que coincidan con la búsqueda.' : 'No hay métodos de pago registrados todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
 
     <MetodoPagoFormModal :visible="mostrarModal" :metodo="metodoEditar" @cerrar="mostrarModal = false" @guardado="onGuardado" />
@@ -38,15 +42,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import MetodoPagoFormModal from '../components/MetodoPagoFormModal.vue';
+import Paginador from '../components/Paginador.vue';
 import { listarMetodosPago, eliminarMetodoPago } from '../services/metodoPagoService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
 
 const metodos = ref([]);
 const cargando = ref(true);
 const mostrarModal = ref(false);
 const metodoEditar = ref(null);
+
+const metodosFiltrados = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return metodos.value;
+  return metodos.value.filter((m) => m.nombre_metodo_pago.toLowerCase().includes(texto));
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(metodosFiltrados, 5);
 
 async function cargarMetodos() {
   cargando.value = true;
@@ -67,6 +82,9 @@ async function eliminar(m) {
 }
 
 onMounted(cargarMetodos);
+onUnmounted(() => {
+  busqueda.texto = '';
+});
 </script>
 
 <style scoped>

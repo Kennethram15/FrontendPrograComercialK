@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { mostrarToast } from './toastStore';
 
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
@@ -19,7 +20,11 @@ api.interceptors.response.use(
       localStorage.removeItem('farmacia_token');
       localStorage.removeItem('farmacia_usuario');
       window.location.href = '/login';
+      return Promise.reject(error);
     }
+
+    const mensaje = error.response?.data?.mensaje || 'Ocurrió un error inesperado';
+    mostrarToast(mensaje, 'error');
     return Promise.reject(error);
   }
 );

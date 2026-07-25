@@ -18,7 +18,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="lote in lotes" :key="lote.id_lote">
+          <tr v-for="lote in itemsPaginados" :key="lote.id_lote">
             <td class="nombre">{{ lote.medicamento?.nombre_medicamento || '—' }}</td>
             <td>{{ formatearFecha(lote.fecha_vencimiento) }}</td>
             <td>{{ lote.existencia_lote }} unidades</td>
@@ -35,11 +35,15 @@
               </div>
             </td>
           </tr>
-          <tr v-if="!cargando && lotes.length === 0">
-            <td colspan="6" class="vacio">No hay lotes registrados todavía.</td>
+          <tr v-if="!cargando && lotesFiltrados.length === 0">
+            <td colspan="6" class="vacio">
+              {{ busqueda.texto ? 'No hay lotes que coincidan con la búsqueda.' : 'No hay lotes registrados todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
 
     <LoteFormModal
@@ -52,15 +56,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import LoteFormModal from '../components/LoteFormModal.vue';
+import Paginador from '../components/Paginador.vue';
 import { listarLotes, eliminarLote } from '../services/loteService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
 
 const lotes = ref([]);
 const cargando = ref(true);
 const mostrarModal = ref(false);
 const loteEditar = ref(null);
+
+const lotesFiltrados = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return lotes.value;
+  return lotes.value.filter((l) => (l.medicamento?.nombre_medicamento || '').toLowerCase().includes(texto));
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(lotesFiltrados, 5);
 
 function formatearFecha(fecha) {
   if (!fecha) return '—';
@@ -96,6 +111,9 @@ async function eliminar(lote) {
 }
 
 onMounted(cargarLotes);
+onUnmounted(() => {
+  busqueda.texto = '';
+});
 </script>
 
 <style scoped>

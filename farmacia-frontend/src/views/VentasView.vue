@@ -9,11 +9,7 @@
         icon-bg="var(--success-soft)"
         icon-color="var(--success)"
       />
-      <StatCard
-        label="Pendientes"
-        :value="stats.pendientes"
-        icon="⏳"
-      />
+      <StatCard label="Pendientes" :value="stats.pendientes" icon="⏳" />
       <StatCard
         label="Canceladas"
         :value="stats.canceladas"
@@ -41,7 +37,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="venta in ventas" :key="venta.id_venta">
+          <tr v-for="venta in itemsPaginados" :key="venta.id_venta">
             <td>#V{{ venta.id_venta }}</td>
             <td>{{ venta.cliente?.nombre_cliente || 'Consumidor final' }}</td>
             <td>{{ formatearFecha(venta.fecha_venta) }}</td>
@@ -52,38 +48,58 @@
               </span>
             </td>
             <td>
-                <div class="acciones">
-                  <button class="icon-btn" title="Descargar comprobante" @click="descargar(venta.id_venta)">🧾</button>
-                  <button class="icon-btn accent">✎</button>
-                  <button class="icon-btn danger">🗑</button>
-                </div>
+              <div class="acciones">
+                <button class="icon-btn" title="Descargar comprobante" @click="descargar(venta.id_venta)">🧾</button>
+                <button class="icon-btn accent">✎</button>
+                <button class="icon-btn danger">🗑</button>
+              </div>
             </td>
           </tr>
-          <tr v-if="!cargando && ventas.length === 0">
-            <td colspan="6" class="vacio">No hay ventas registradas todavía.</td>
+          <tr v-if="!cargando && ventasFiltradas.length === 0">
+            <td colspan="6" class="vacio">
+              {{ busqueda.texto ? 'No hay ventas que coincidan con la búsqueda.' : 'No hay ventas registradas todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
   </AppLayout>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import StatCard from '../components/StatCard.vue';
+import Paginador from '../components/Paginador.vue';
 import api from '../services/api';
 import { descargarComprobante } from '../services/ventaService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
+
 const ventas = ref([]);
 const cargando = ref(true);
 const stats = reactive({ total: 0, completadas: 0, pendientes: 0, canceladas: 0 });
+
+const ventasFiltradas = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return ventas.value;
+  return ventas.value.filter((v) =>
+    (v.cliente?.nombre_cliente || 'consumidor final').toLowerCase().includes(texto)
+  );
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(ventasFiltradas, 5);
+
 async function descargar(idVenta) {
   try {
     await descargarComprobante(idVenta);
   } catch (e) {
-    alert('No se pudo descargar el comprobante');
+    // el error ya se muestra con el toast global
   }
 }
+
 function claseEstado(estado) {
   if (estado === 'completada') return 'badge-success';
   if (estado === 'cancelada') return 'badge-danger';
@@ -103,11 +119,13 @@ onMounted(async () => {
     stats.completadas = data.filter((v) => v.estado_venta === 'completada').length;
     stats.pendientes = data.filter((v) => v.estado_venta === 'pendiente').length;
     stats.canceladas = data.filter((v) => v.estado_venta === 'cancelada').length;
-  } catch (error) {
-    console.error('Error al cargar ventas', error);
   } finally {
     cargando.value = false;
   }
+});
+
+onUnmounted(() => {
+  busqueda.texto = '';
 });
 </script>
 
@@ -118,32 +136,27 @@ onMounted(async () => {
   gap: 18px;
   margin-bottom: 24px;
 }
-
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20px 22px;
 }
-
 .toolbar h2 {
   font-size: 15px;
   margin: 0;
   color: var(--text-muted);
   font-weight: 600;
 }
-
 .acciones {
   display: flex;
   gap: 8px;
 }
-
 .vacio {
   text-align: center;
   color: var(--text-muted);
   padding: 32px;
 }
-
 @media (max-width: 1000px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);

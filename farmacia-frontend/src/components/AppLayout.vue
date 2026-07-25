@@ -33,7 +33,7 @@
           <button class="icon-btn" title="Configuración">⚙️</button>
           <button class="icon-btn" title="Cerrar sesión" @click="cerrarSesion">🚪</button>
           <div class="avatar" :title="usuario?.nombre_usuario">{{ inicial }}</div>
-          <input class="search" type="text" placeholder="Buscar..." />
+          <input v-if="mostrarBuscador" class="search" type="text" placeholder="Buscar..." v-model="busqueda.texto" />
         </div>
       </header>
 
@@ -41,6 +41,8 @@
         <slot />
       </main>
     </div>
+
+    <ToastContainer />
   </div>
 </template>
 
@@ -48,11 +50,17 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { obtenerUsuario, logout } from '../services/authService';
+import { busqueda } from '../services/searchStore';
+import ToastContainer from './ToastContainer.vue';
 
 defineProps({
   title: {
     type: String,
     required: true,
+  },
+  mostrarBuscador: {
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -73,6 +81,7 @@ const todosLosItems = [
   { path: '/metodos-pago', label: 'Métodos de pago' },
   { path: '/presentaciones', label: 'Presentaciones' },
   { path: '/lotes', label: 'Lotes' },
+  { path: '/reportes', label: 'Reportes' },
 ];
 
 const navItems = computed(() =>

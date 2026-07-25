@@ -18,7 +18,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="med in medicamentos" :key="med.id_medicamento">
+          <tr v-for="med in itemsPaginados" :key="med.id_medicamento">
             <td>
               <div class="nombre">{{ med.nombre_medicamento }}</div>
               <div class="subtexto">{{ med.codigo_barras || 'Sin código' }}</div>
@@ -38,11 +38,15 @@
               </div>
             </td>
           </tr>
-          <tr v-if="!cargando && medicamentos.length === 0">
-            <td colspan="6" class="vacio">No hay medicamentos registrados todavía.</td>
+          <tr v-if="!cargando && medicamentosFiltrados.length === 0">
+            <td colspan="6" class="vacio">
+              {{ busqueda.texto ? 'No hay medicamentos que coincidan con la búsqueda.' : 'No hay medicamentos registrados todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
 
     <MedicamentoFormModal
@@ -55,15 +59,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import MedicamentoFormModal from '../components/MedicamentoFormModal.vue';
+import Paginador from '../components/Paginador.vue';
 import { listarMedicamentos, eliminarMedicamento } from '../services/medicamentoService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
 
 const medicamentos = ref([]);
 const cargando = ref(true);
 const mostrarModal = ref(false);
 const medicamentoEditar = ref(null);
+
+const medicamentosFiltrados = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return medicamentos.value;
+  return medicamentos.value.filter((m) => m.nombre_medicamento.toLowerCase().includes(texto));
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(medicamentosFiltrados, 5);
 
 async function cargarMedicamentos() {
   cargando.value = true;
@@ -94,6 +109,9 @@ async function eliminar(med) {
 }
 
 onMounted(cargarMedicamentos);
+onUnmounted(() => {
+  busqueda.texto = '';
+});
 </script>
 
 <style scoped>

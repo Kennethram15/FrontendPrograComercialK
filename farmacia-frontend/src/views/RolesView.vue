@@ -11,7 +11,7 @@
           <tr><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
         </thead>
         <tbody>
-          <tr v-for="rol in roles" :key="rol.id_rol">
+          <tr v-for="rol in itemsPaginados" :key="rol.id_rol">
             <td class="nombre">{{ rol.nombre_rol }}</td>
             <td>
               <span class="badge" :class="rol.estado_rol ? 'badge-success' : 'badge-danger'">
@@ -25,11 +25,15 @@
               </div>
             </td>
           </tr>
-          <tr v-if="!cargando && roles.length === 0">
-            <td colspan="3" class="vacio">No hay roles registrados todavía.</td>
+          <tr v-if="!cargando && rolesFiltrados.length === 0">
+            <td colspan="3" class="vacio">
+              {{ busqueda.texto ? 'No hay roles que coincidan con la búsqueda.' : 'No hay roles registrados todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
 
     <RolFormModal :visible="mostrarModal" :rol="rolEditar" @cerrar="mostrarModal = false" @guardado="onGuardado" />
@@ -37,15 +41,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import RolFormModal from '../components/RolFormModal.vue';
+import Paginador from '../components/Paginador.vue';
 import { listarRoles, eliminarRol } from '../services/rolService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
 
 const roles = ref([]);
 const cargando = ref(true);
 const mostrarModal = ref(false);
 const rolEditar = ref(null);
+
+const rolesFiltrados = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return roles.value;
+  return roles.value.filter((r) => r.nombre_rol.toLowerCase().includes(texto));
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(rolesFiltrados, 5);
 
 async function cargarRoles() {
   cargando.value = true;
@@ -66,6 +81,9 @@ async function eliminar(rol) {
 }
 
 onMounted(cargarRoles);
+onUnmounted(() => {
+  busqueda.texto = '';
+});
 </script>
 
 <style scoped>

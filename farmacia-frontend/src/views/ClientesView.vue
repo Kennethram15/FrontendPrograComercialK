@@ -16,7 +16,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="cli in clientes" :key="cli.id_cliente">
+          <tr v-for="cli in itemsPaginados" :key="cli.id_cliente">
             <td class="nombre">{{ cli.nombre_cliente }}</td>
             <td>{{ cli.nit_cliente }}</td>
             <td>
@@ -31,11 +31,15 @@
               </div>
             </td>
           </tr>
-          <tr v-if="!cargando && clientes.length === 0">
-            <td colspan="4" class="vacio">No hay clientes registrados todavía.</td>
+          <tr v-if="!cargando && clientesFiltrados.length === 0">
+            <td colspan="4" class="vacio">
+              {{ busqueda.texto ? 'No hay clientes que coincidan con la búsqueda.' : 'No hay clientes registrados todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
 
     <ClienteFormModal
@@ -48,23 +52,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import ClienteFormModal from '../components/ClienteFormModal.vue';
+import Paginador from '../components/Paginador.vue';
 import { listarClientes, eliminarCliente } from '../services/clienteService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
 
 const clientes = ref([]);
 const cargando = ref(true);
 const mostrarModal = ref(false);
 const clienteEditar = ref(null);
 
+const clientesFiltrados = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return clientes.value;
+  return clientes.value.filter((c) => c.nombre_cliente.toLowerCase().includes(texto));
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(clientesFiltrados, 5);
+
 async function cargarClientes() {
   cargando.value = true;
   try {
     const { data } = await listarClientes();
     clientes.value = data;
-  } catch (error) {
-    console.error('Error al cargar clientes', error);
   } finally {
     cargando.value = false;
   }
@@ -97,6 +110,9 @@ async function eliminar(cliente) {
 }
 
 onMounted(cargarClientes);
+onUnmounted(() => {
+  busqueda.texto = '';
+});
 </script>
 
 <style scoped>

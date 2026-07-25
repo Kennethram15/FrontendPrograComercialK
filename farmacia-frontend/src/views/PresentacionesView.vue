@@ -11,7 +11,7 @@
           <tr><th>Nombre</th><th>Estado</th><th>Acciones</th></tr>
         </thead>
         <tbody>
-          <tr v-for="p in presentaciones" :key="p.id_presentacion">
+          <tr v-for="p in itemsPaginados" :key="p.id_presentacion">
             <td class="nombre">{{ p.nombre_presentacion }}</td>
             <td>
               <span class="badge" :class="p.estado_presentacion ? 'badge-success' : 'badge-danger'">
@@ -25,11 +25,15 @@
               </div>
             </td>
           </tr>
-          <tr v-if="!cargando && presentaciones.length === 0">
-            <td colspan="3" class="vacio">No hay presentaciones registradas todavía.</td>
+          <tr v-if="!cargando && presentacionesFiltradas.length === 0">
+            <td colspan="3" class="vacio">
+              {{ busqueda.texto ? 'No hay presentaciones que coincidan con la búsqueda.' : 'No hay presentaciones registradas todavía.' }}
+            </td>
           </tr>
         </tbody>
       </table>
+
+      <Paginador :pagina-actual="paginaActual" :total-paginas="totalPaginas" @cambiar="irAPagina" />
     </div>
 
     <PresentacionFormModal :visible="mostrarModal" :presentacion="presentacionEditar" @cerrar="mostrarModal = false" @guardado="onGuardado" />
@@ -37,15 +41,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '../components/AppLayout.vue';
 import PresentacionFormModal from '../components/PresentacionFormModal.vue';
+import Paginador from '../components/Paginador.vue';
 import { listarPresentaciones, eliminarPresentacion } from '../services/presentacionService';
+import { busqueda } from '../services/searchStore';
+import { usePaginacion } from '../composables/usePaginacion';
 
 const presentaciones = ref([]);
 const cargando = ref(true);
 const mostrarModal = ref(false);
 const presentacionEditar = ref(null);
+
+const presentacionesFiltradas = computed(() => {
+  const texto = busqueda.texto.trim().toLowerCase();
+  if (!texto) return presentaciones.value;
+  return presentaciones.value.filter((p) => p.nombre_presentacion.toLowerCase().includes(texto));
+});
+
+const { paginaActual, totalPaginas, itemsPaginados, irAPagina } = usePaginacion(presentacionesFiltradas, 5);
 
 async function cargarPresentaciones() {
   cargando.value = true;
@@ -66,6 +81,9 @@ async function eliminar(p) {
 }
 
 onMounted(cargarPresentaciones);
+onUnmounted(() => {
+  busqueda.texto = '';
+});
 </script>
 
 <style scoped>

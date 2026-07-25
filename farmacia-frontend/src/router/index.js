@@ -14,6 +14,7 @@ const routes = [
   { path: '/metodos-pago', name: 'metodos-pago', component: () => import('../views/MetodosPagoView.vue') },
   { path: '/presentaciones', name: 'presentaciones', component: () => import('../views/PresentacionesView.vue') },
   { path: '/lotes', name: 'lotes', component: () => import('../views/LotesView.vue') },
+  { path: '/reportes', name: 'reportes', component: () => import('../views/ReportesView.vue') },
 ];
 
 const router = createRouter({
