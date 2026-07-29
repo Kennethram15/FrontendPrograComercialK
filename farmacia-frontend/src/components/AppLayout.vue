@@ -25,16 +25,10 @@
         <h1>{{ title }}</h1>
 
         <div class="topbar-actions">
-          <button class="icon-btn" title="Tema">🌙</button>
-          <button class="icon-btn" title="Notificaciones" style="position: relative">
-            🔔
-            <span class="notif-dot">3</span>
-          </button>
-          <button class="icon-btn" title="Configuración">⚙️</button>
-          <button class="icon-btn" title="Cerrar sesión" @click="cerrarSesion">🚪</button>
-          <div class="avatar" :title="usuario?.nombre_usuario">{{ inicial }}</div>
-          <input v-if="mostrarBuscador" class="search" type="text" placeholder="Buscar..." v-model="busqueda.texto" />
-        </div>
+  <button class="icon-btn" title="Cerrar sesión" @click="cerrarSesion">⏻</button>
+  <div class="avatar" :title="usuario?.nombre_usuario">{{ inicial }}</div>
+  <input v-if="mostrarBuscador" class="search" type="text" placeholder="Buscar..." v-model="busqueda.texto" />
+</div>
       </header>
 
       <main class="content">
@@ -82,6 +76,7 @@ const todosLosItems = [
   { path: '/presentaciones', label: 'Presentaciones' },
   { path: '/lotes', label: 'Lotes' },
   { path: '/reportes', label: 'Reportes' },
+  { path: '/usuarios', label: 'Usuarios', soloAdmin: true },
 ];
 
 const navItems = computed(() =>

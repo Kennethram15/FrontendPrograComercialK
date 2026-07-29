@@ -1,40 +1,41 @@
 <template>
   <div v-if="visible" class="overlay" @click.self="$emit('cerrar')">
     <div class="modal card">
-      <h3>{{ lote ? 'Editar lote' : 'Agregar lote' }}</h3>
+      <h3>{{ usuario ? 'Editar usuario' : 'Agregar usuario' }}</h3>
       <form @submit.prevent="guardar">
-        <label>Medicamento</label>
-        <select v-model.number="form.id_medicamento" required>
+        <label>Nombre completo</label>
+        <input v-model="form.nombre_usuario" required />
+
+        <label>Usuario (para iniciar sesión)</label>
+        <input v-model="form.usuario" required />
+
+        <label>{{ usuario ? 'Nueva contraseña (dejar en blanco para no cambiarla)' : 'Contraseña' }}</label>
+        <input v-model="form.password" type="password" :required="!usuario" />
+
+        <label>Rol</label>
+        <select v-model.number="form.id_rol" required>
           <option disabled value="">Selecciona uno</option>
-          <option v-for="m in medicamentos" :key="m.id_medicamento" :value="m.id_medicamento">
-            {{ m.nombre_medicamento }}
+          <option v-for="r in roles" :key="r.id_rol" :value="r.id_rol">
+            {{ r.nombre_rol }}
           </option>
         </select>
 
         <div class="fila">
           <div class="campo">
-            <label>Fecha de producción</label>
-            <input v-model="form.fecha_produccion" type="date" />
+            <label>Teléfono</label>
+            <input v-model="form.telefono_usuario" />
           </div>
           <div class="campo">
-            <label>Fecha de vencimiento</label>
-            <input v-model="form.fecha_vencimiento" type="date" required />
+            <label>DPI</label>
+            <input v-model="form.dpi_usuario" />
           </div>
         </div>
 
-        <div class="fila">
-          <div class="campo">
-            <label>Existencia del lote</label>
-            <input v-model.number="form.existencia_lote" type="number" min="0" required />
-          </div>
-          <div class="campo">
-            <label>Precio del lote</label>
-            <input v-model.number="form.precio_lote" type="number" step="0.01" min="0" required />
-          </div>
-        </div>
+        <label>Correo</label>
+        <input v-model="form.correo_usuario" type="email" />
 
         <label class="checkbox">
-          <input type="checkbox" v-model="form.estado_lote" /> Activo
+          <input type="checkbox" v-model="form.estado_usuario" /> Activo
         </label>
 
         <div class="acciones-modal">
@@ -48,53 +49,59 @@
 
 <script setup>
 import { reactive, ref, watch, onMounted } from 'vue';
-import { crearLote, actualizarLote, listarMedicamentosActivos } from '../services/loteService';
+import { crearUsuario, actualizarUsuario, listarRoles } from '../services/usuarioService';
 
 const props = defineProps({
   visible: Boolean,
-  lote: { type: Object, default: null },
+  usuario: { type: Object, default: null },
 });
 const emit = defineEmits(['cerrar', 'guardado']);
 
-const medicamentos = ref([]);
+const roles = ref([]);
 
 const form = reactive({
-  id_medicamento: '',
-  fecha_produccion: '',
-  fecha_vencimiento: '',
-  existencia_lote: 0,
-  precio_lote: 0,
-  estado_lote: true,
+  nombre_usuario: '',
+  usuario: '',
+  password: '',
+  id_rol: '',
+  telefono_usuario: '',
+  dpi_usuario: '',
+  correo_usuario: '',
+  estado_usuario: true,
 });
 
-function formatearFecha(fecha) {
-  if (!fecha) return '';
-  return new Date(fecha).toISOString().slice(0, 10);
-}
-
 watch(
-  () => props.lote,
+  () => props.usuario,
   (nuevo) => {
-    form.id_medicamento = nuevo?.id_medicamento ?? '';
-    form.fecha_produccion = formatearFecha(nuevo?.fecha_produccion);
-    form.fecha_vencimiento = formatearFecha(nuevo?.fecha_vencimiento);
-    form.existencia_lote = nuevo?.existencia_lote ?? 0;
-    form.precio_lote = Number(nuevo?.precio_lote ?? 0);
-    form.estado_lote = nuevo ? !!nuevo.estado_lote : true;
+    form.nombre_usuario = nuevo?.nombre_usuario ?? '';
+    form.usuario = nuevo?.usuario ?? '';
+    form.password = '';
+    form.id_rol = nuevo?.id_rol ?? '';
+    form.telefono_usuario = nuevo?.telefono_usuario ?? '';
+    form.dpi_usuario = nuevo?.dpi_usuario ?? '';
+    form.correo_usuario = nuevo?.correo_usuario ?? '';
+    form.estado_usuario = nuevo ? !!nuevo.estado_usuario : true;
   },
   { immediate: true }
 );
 
 onMounted(async () => {
-  const { data } = await listarMedicamentosActivos();
-  medicamentos.value = data;
+  const { data } = await listarRoles();
+  roles.value = data;
 });
 
 async function guardar() {
-  if (props.lote) {
-    await actualizarLote(props.lote.id_lote, form);
+  // Solo se manda la contraseña si el usuario escribió algo,
+  // para no sobreescribir la contraseña real con un valor vacío al editar.
+  const payload = { ...form };
+  if (!payload.password) {
+    delete payload.password;
+  }
+
+  if (props.usuario) {
+    await actualizarUsuario(props.usuario.id_usuarios, payload);
   } else {
-    await crearLote(form);
+    await crearUsuario(payload);
   }
   emit('guardado');
 }

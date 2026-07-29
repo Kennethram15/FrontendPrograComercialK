@@ -21,37 +21,39 @@
         <input v-model="form.componente_activo" />
 
         <div class="fila">
-          <div>
+          <div class="campo">
             <label>Cantidad por paquete</label>
             <input v-model.number="form.cantidad_por_paquete" type="number" min="1" required />
           </div>
-          <div>
+          <div class="campo">
             <label>Existencia total</label>
             <input v-model.number="form.existencia_total_medicamento" type="number" min="0" required />
           </div>
         </div>
 
         <div class="fila-3">
-          <div>
+          <div class="campo">
             <label>Precio mayorista</label>
             <input v-model.number="form.precio_mayorista" type="number" step="0.01" min="0" required />
           </div>
-          <div>
+          <div class="campo">
             <label>Precio mínimo</label>
             <input v-model.number="form.precio_minimo" type="number" step="0.01" min="0" required />
           </div>
-          <div>
+          <div class="campo">
             <label>Precio de venta</label>
             <input v-model.number="form.precio_venta" type="number" step="0.01" min="0" required />
           </div>
         </div>
 
-        <label class="checkbox">
-          <input type="checkbox" v-model="form.venta_libre" /> Venta libre
-        </label>
-        <label class="checkbox">
-          <input type="checkbox" v-model="form.estado_medicamento" /> Activo
-        </label>
+        <div class="checkboxes">
+          <label class="checkbox">
+            <input type="checkbox" v-model="form.venta_libre" /> Venta libre
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" v-model="form.estado_medicamento" /> Activo
+          </label>
+        </div>
 
         <div class="acciones-modal">
           <button type="button" class="btn btn-ghost" @click="$emit('cerrar')">Cancelar</button>
@@ -130,12 +132,16 @@ async function guardar() {
   align-items: center;
   justify-content: center;
   z-index: 50;
+  padding: 20px;
 }
 .modal {
-  width: 440px;
+  width: 100%;
+  max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
+  box-sizing: border-box;
 }
 .modal h3 {
   margin: 0 0 18px;
@@ -151,21 +157,48 @@ label {
   color: var(--text-muted);
   font-weight: 600;
 }
+input:not([type='checkbox']),
+select {
+  width: 100%;
+  box-sizing: border-box;
+}
 .fila {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 .fila-3 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
+}
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.checkboxes {
+  display: flex;
+  gap: 20px;
+  margin-top: 4px;
 }
 .checkbox {
   flex-direction: row;
   align-items: center;
   gap: 8px;
   display: flex;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+}
+.checkbox input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 .acciones-modal {
   display: flex;
